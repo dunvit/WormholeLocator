@@ -1,0 +1,4 @@
+﻿+ Add tooltypes to static wormholes in Solar System panel. Tooltypes  show wormhole's MaxStableMass and MaxJumpMass 
++ Add colors to static wormholes labels
++ Add button "Run url". On click open WHL brouser and run url address from clipboard. (X4me1eoH)
++ Add url texbox and option run in WHL browser any url

@@ -112,7 +112,7 @@ namespace WHLocator
 
                 Location.ReLoad();
 
-                var data = ReadFile("http://superpute.com/system/J" + wormholeId);
+                var data = WHL.UiTools.Tools.ReadFile("http://superpute.com/system/J" + wormholeId, Log);
 
                 var dataParts = data.Split(new[] { "WH Static</a><br />" }, StringSplitOptions.None)[1].Split(new[] { "</table>" }, StringSplitOptions.None)[0];
 
@@ -191,28 +191,6 @@ namespace WHLocator
             
         }
 
-        private static string ReadFile(string urlAddress)
-        {
-            var request = (HttpWebRequest)WebRequest.Create(urlAddress);
-            var response = (HttpWebResponse)request.GetResponse();
-
-            if (response.StatusCode != HttpStatusCode.OK)
-            {
-                Log.ErrorFormat("[Pilot.ReadCageConfigurationFile] Read configuration file {0} is failed. Status = {1} ", urlAddress, response.StatusCode);
-                return null;
-            }
-
-            var receiveStream = response.GetResponseStream();
-
-            var readStream = response.CharacterSet == null ? new StreamReader(receiveStream) : new StreamReader(receiveStream, Encoding.GetEncoding(response.CharacterSet));
-
-            var data = readStream.ReadToEnd();
-
-            response.Close();
-            readStream.Close();
-
-            return data;
-        }
 
         public void RefreshInfo()
         {

@@ -11,6 +11,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using log4net;
 using WHL.Properties;
+using WHL.UiTools;
 using WHLocator.Infrastructure;
 using WHLocator.UiTools;
 
@@ -76,6 +77,7 @@ namespace WHLocator
 
             Size = _sizeOpen;
             Resize();
+            CreateTooltipsForStatics();
 
             System.Security.Principal.WindowsIdentity identity = System.Security.Principal.WindowsIdentity.GetCurrent();
             System.Security.Principal.WindowsPrincipal principal = new System.Security.Principal.WindowsPrincipal(identity);
@@ -90,6 +92,28 @@ namespace WHLocator
             new Thread(() => new CrestApiListener().ListenLocalhost(startProcessFunction)) { IsBackground = true }.Start();
 
             
+        }
+
+        ToolTip toolTip1 = new ToolTip();
+
+        private void CreateTooltipsForStatics()
+        {
+            toolTip1.AutoPopDelay = 5000;
+            toolTip1.InitialDelay = 1000;
+            toolTip1.ReshowDelay = 500;
+            toolTip1.ShowAlways = true;
+
+
+            var toolTipUrlButton = new ToolTip
+            {
+                AutoPopDelay = 5000,
+                InitialDelay = 1000,
+                ReshowDelay = 500,
+                ShowAlways = true
+            };
+
+
+            toolTipUrlButton.SetToolTip(btnOpenBrowserAndStartUrl, "Open WHL brouser and start url");
         }
 
         public void StartPilotAuthorizeFlow(string value)
@@ -259,10 +283,6 @@ namespace WHLocator
 
         private void OpenSolarSystemPanel()
         {
-            if (_currentPilot == null)
-            {
-                return;
-            }
 
             pnlContainer.BringToFront();
             pnlAuthirization.BringToFront();
@@ -293,6 +313,8 @@ namespace WHLocator
                 txtSolarSystemRegion.Text = _currentPilot.Location.Region;
                 txtSolarSystemConstellation.Text = _currentPilot.Location.Constellation;
 
+                Wormhole wormholeI;
+                Wormhole wormholeII;
                 switch (_currentPilot.Location.StaticSystems.Count)
                 {
                     case 0:
@@ -302,22 +324,39 @@ namespace WHLocator
                         txtSolarSystemStaticIIData.Visible = false;
                         break;
                     case 1:
+                        wormholeI = _wormholes.GetWormhole(_currentPilot.Location.StaticSystems[0]);
+
                         txtSolarSystemStaticII.Visible = false;
                         txtSolarSystemStaticIIData.Visible = false;
                         txtSolarSystemStaticI.Text = _currentPilot.Location.StaticSystems[0];
                         txtSolarSystemStaticI.Visible = true;
+                        txtSolarSystemStaticI.ForeColor = Tools.GetColorBySolarSystem(_wormholes.GetWormhole(_currentPilot.Location.StaticSystems[0]).Name);
                         txtSolarSystemStaticIData.Text = _wormholes.GetWormhole(_currentPilot.Location.StaticSystems[0]).Name;
                         txtSolarSystemStaticIData.Visible = true;
+
+                        // Set up the ToolTip text for the Button and Checkbox.
+                        toolTip1.SetToolTip(txtSolarSystemStaticI, "Max Stable Mass=" + wormholeI.MaxStableMass + "\r\nMax Jump  Mass=" + wormholeI.MaxJumpMass);
+
                         break;
                     case 2:
+
+                        wormholeI = _wormholes.GetWormhole(_currentPilot.Location.StaticSystems[0]);
+                        wormholeII = _wormholes.GetWormhole(_currentPilot.Location.StaticSystems[1]);
+
                         txtSolarSystemStaticI.Text = _currentPilot.Location.StaticSystems[0];
                         txtSolarSystemStaticI.Visible = true;
                         txtSolarSystemStaticII.Text = _currentPilot.Location.StaticSystems[1];
                         txtSolarSystemStaticII.Visible = true;
                         txtSolarSystemStaticIData.Text = _wormholes.GetWormhole(_currentPilot.Location.StaticSystems[0]).Name;
+                        txtSolarSystemStaticI.ForeColor = Tools.GetColorBySolarSystem(_wormholes.GetWormhole(_currentPilot.Location.StaticSystems[0]).Name);
                         txtSolarSystemStaticIData.Visible = true;
                         txtSolarSystemStaticIIData.Text = _wormholes.GetWormhole(_currentPilot.Location.StaticSystems[1]).Name;
+                        txtSolarSystemStaticII.ForeColor = Tools.GetColorBySolarSystem(_wormholes.GetWormhole(_currentPilot.Location.StaticSystems[1]).Name);
                         txtSolarSystemStaticIIData.Visible = true;
+
+                        // Set up the ToolTip text for the Button and Checkbox.
+                        toolTip1.SetToolTip(txtSolarSystemStaticI, "Max Stable Mass=" + wormholeI.MaxStableMass + " Max Jump Mass=" + wormholeI.MaxJumpMass);
+                        toolTip1.SetToolTip(txtSolarSystemStaticII, "Max Stable Mass=" + wormholeII.MaxStableMass + " Max Jump Mass=" + wormholeII.MaxJumpMass);
                         break;
                 }
             }
@@ -325,12 +364,6 @@ namespace WHLocator
 
         private void OpenPilotInformationPanel()
         {
-            if (_currentPilot == null)
-            {
-                return;
-            }
-
-            
             pnlContainer.BringToFront();
             pnlAuthirization.BringToFront();
             pnlSolarSystemInformation.BringToFront();
@@ -345,12 +378,6 @@ namespace WHLocator
 
         private void OpenCoordinatesSignaturesPanel(object sender, EventArgs e)
         {
-            if (_currentPilot == null)
-            {
-                return;
-            }
-
-
             pnlContainer.BringToFront();
             pnlAuthirization.BringToFront();
             pnlSolarSystemInformation.BringToFront();
@@ -790,6 +817,33 @@ namespace WHLocator
             }
 
             
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            var txtInClip = Clipboard.GetText();
+
+            if (txtInClip.StartsWith("http"))
+            {
+                webBrowser1.Url = new Uri(txtInClip);
+                txtUrl.Text = txtInClip;
+            }
+
+            
+            webBrowser1.Visible = true;
+            OpenWebBrowserPanel();
+            Resize();
+
+            txtUrl.Focus();
+
+        }
+
+        private void Event_ExecuteUrlInWhlBrowser(object sender, EventArgs e)
+        {
+            if (txtUrl.Text.StartsWith("http"))
+            {
+                webBrowser1.Url = new Uri(txtUrl.Text);
+            }
         }
 
         
